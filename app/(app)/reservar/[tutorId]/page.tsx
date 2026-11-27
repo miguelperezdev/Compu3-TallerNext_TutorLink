@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { IoChevronBack } from "react-icons/io5";
+import { BookingForm } from "@/components/bookings/BookingForm";
 import { Protected } from "@/components/layout/Protected";
 import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/Card";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserRole } from "@/interfaces/user.interface";
 import { isApiError } from "@/lib/api";
@@ -38,16 +38,23 @@ async function BookingContent({ session, params }: { session: Session } & Pick<P
         <IoChevronBack aria-hidden /> Volver al perfil
       </Link>
 
-      <PageHeader eyebrow="Paso 2 de 3 · Elegir horario" title="Reservar tutoría" />
-
-      <Card className="flex items-center gap-4">
-        <Avatar name={tutor.user.fullName} size="lg" />
-        <div className="min-w-0">
-          <p className="truncate text-lg font-bold">{tutor.user.fullName}</p>
-          <p className="text-sm text-ink-soft">{tutor.university}</p>
-          <p className="text-sm font-semibold text-brand-700">{formatCOP(tutor.hourlyRate)} COP / h</p>
-        </div>
-      </Card>
+      <BookingForm
+        tutor={{
+          id: tutor.id,
+          fullName: tutor.user.fullName,
+          hourlyRate: tutor.hourlyRate,
+          subjects: tutor.subjects
+        }}
+      >
+        <Card className="flex items-center gap-4">
+          <Avatar name={tutor.user.fullName} size="lg" />
+          <div className="min-w-0">
+            <p className="truncate text-lg font-bold">{tutor.user.fullName}</p>
+            <p className="text-sm text-ink-soft">{tutor.university}</p>
+            <p className="text-sm font-semibold text-brand-700">{formatCOP(tutor.hourlyRate)} COP / h</p>
+          </div>
+        </Card>
+      </BookingForm>
     </>
   );
 }
