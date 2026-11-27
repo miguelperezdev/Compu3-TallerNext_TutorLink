@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { IoCalendarOutline } from "react-icons/io5";
+import { BookingActions } from "@/components/bookings/BookingActions";
 import { BookingStatusFilter } from "@/components/bookings/BookingStatusFilter";
 import { BookingSummaryCard } from "@/components/bookings/BookingSummaryCard";
 import { Protected } from "@/components/layout/Protected";
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { UserRole } from "@/interfaces/user.interface";
 import { handleApiError } from "@/lib/api-guard";
 import { getMyBookings } from "@/lib/booking-api";
-import { BOOKINGS_PAGE_SIZE, parseBookingStatus } from "@/lib/booking-utils";
+import { BOOKINGS_PAGE_SIZE, getAvailableActions, parseBookingStatus } from "@/lib/booking-utils";
 import { readParam, readPositiveInt } from "@/lib/pagination";
 import { hasRole } from "@/lib/roles";
 import { ROUTES } from "@/lib/routes";
@@ -71,7 +72,16 @@ async function MyBookings({ session, searchParams }: { session: Session } & Pick
           <ul className="grid gap-4 md:grid-cols-2">
             {bookings.map((booking) => (
               <li key={booking.id}>
-                <BookingSummaryCard booking={booking} viewerId={session.user.id} />
+                <BookingSummaryCard
+                  booking={booking}
+                  viewerId={session.user.id}
+                  actions={
+                    <BookingActions
+                      bookingId={booking.id}
+                      actions={getAvailableActions(booking, session.user.id)}
+                    />
+                  }
+                />
               </li>
             ))}
           </ul>
