@@ -7,12 +7,13 @@ import { Protected } from "@/components/layout/Protected";
 import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Paginator } from "@/components/ui/Paginator";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { UserRole } from "@/interfaces/user.interface";
 import { handleApiError } from "@/lib/api-guard";
 import { getMyBookings } from "@/lib/booking-api";
 import { BOOKINGS_PAGE_SIZE, parseBookingStatus } from "@/lib/booking-utils";
-import { readParam } from "@/lib/pagination";
+import { readParam, readPositiveInt } from "@/lib/pagination";
 import { hasRole } from "@/lib/roles";
 import { ROUTES } from "@/lib/routes";
 import type { Session } from "@/lib/session";
@@ -24,13 +25,21 @@ async function MyBookings({ session, searchParams }: { session: Session } & Pick
   await connection();
   const params = await searchParams;
   const status = parseBookingStatus(readParam(params.status));
+  const page = readPositiveInt(params.page, 1);
 
-  let bookings;
+  // El backend no devuelve el total: se pide una reserva de más para saber si hay página siguiente.
+  let fetched;
   try {
-    bookings = await getMyBookings(session.token, { status, limit: BOOKINGS_PAGE_SIZE });
+    fetched = await getMyBookings(session.token, {
+      status,
+      limit: BOOKINGS_PAGE_SIZE + 1,
+      skip: (page - 1) * BOOKINGS_PAGE_SIZE
+    });
   } catch (error) {
     handleApiError(error, ROUTES.bookings);
   }
+  const hasNext = fetched.length > BOOKINGS_PAGE_SIZE;
+  const bookings = fetched.slice(0, BOOKINGS_PAGE_SIZE);
 
   const isStudent = hasRole(session.user.roles, [UserRole.STUDENT]);
 
@@ -58,13 +67,23 @@ async function MyBookings({ session, searchParams }: { session: Session } & Pick
           }
         />
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2">
-          {bookings.map((booking) => (
-            <li key={booking.id}>
-              <BookingSummaryCard booking={booking} viewerId={session.user.id} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="grid gap-4 md:grid-cols-2">
+            {bookings.map((booking) => (
+              <li key={booking.id}>
+                <BookingSummaryCard booking={booking} viewerId={session.user.id} />
+              </li>
+            ))}
+          </ul>
+          <div className="mt-6">
+            <Paginator
+              basePath={ROUTES.bookings}
+              page={page}
+              totalPages={hasNext ? page + 1 : page}
+              params={status ? { status } : {}}
+            />
+          </div>
+        </>
       )}
     </>
   );
