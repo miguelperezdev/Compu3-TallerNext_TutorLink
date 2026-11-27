@@ -1,5 +1,41 @@
 import { BookingStatus, type Booking } from "@/interfaces/booking.interface";
 
+/** Reservas por página en /mis-tutorias. */
+export const BOOKINGS_PAGE_SIZE = 6;
+
+/** Valida el `?status=` de la URL: solo valores del enum, cualquier otra cosa = sin filtro. */
+export function parseBookingStatus(value: string): BookingStatus | undefined {
+    return Object.values(BookingStatus).find((status) => status === value);
+}
+
+export type BookingRole = "student" | "tutor";
+export type BookingAction = "confirm" | "cancel" | "complete" | "review";
+
+/** El rol se decide por reserva: soy el tutor si el perfil de la reserva es mío. */
+export function getBookingRole(booking: Booking, viewerId: string): BookingRole {
+    return booking.tutorProfile.user.id === viewerId ? "tutor" : "student";
+}
+
+/**
+ * Acciones disponibles según rol y estado (el backend las vuelve a validar):
+ *  - tutor: PENDING -> confirmar/cancelar · CONFIRMED -> completar/cancelar
+ *  - estudiante: PENDING|CONFIRMED -> cancelar · COMPLETED -> calificar
+ */
+export function getAvailableActions(booking: Booking, viewerId: string): BookingAction[] {
+    const role = getBookingRole(booking, viewerId);
+    const { status } = booking;
+
+    if (role === "tutor") {
+        if (status === BookingStatus.PENDING) return ["confirm", "cancel"];
+        if (status === BookingStatus.CONFIRMED) return ["complete", "cancel"];
+        return [];
+    }
+
+    if (status === BookingStatus.PENDING || status === BookingStatus.CONFIRMED) return ["cancel"];
+    if (status === BookingStatus.COMPLETED) return ["review"];
+    return [];
+}
+
 /** Colombia no tiene horario de verano: el offset es fijo y el ISO resultante es determinista. */
 const BOGOTA_OFFSET = "-05:00";
 
