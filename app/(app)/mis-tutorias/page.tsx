@@ -13,8 +13,14 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { UserRole } from "@/interfaces/user.interface";
 import { handleApiError } from "@/lib/api-guard";
 import { getMyBookings } from "@/lib/booking-api";
-import { BOOKINGS_PAGE_SIZE, getAvailableActions, parseBookingStatus } from "@/lib/booking-utils";
-import { readParam, readPositiveInt } from "@/lib/pagination";
+import {
+  BOOKINGS_FETCH_LIMIT,
+  BOOKINGS_PAGE_SIZE,
+  filterBookingsByStatus,
+  getAvailableActions,
+  parseBookingStatus
+} from "@/lib/booking-utils";
+import { paginate, readParam, readPositiveInt } from "@/lib/pagination";
 import { hasRole } from "@/lib/roles";
 import { ROUTES } from "@/lib/routes";
 import type { Session } from "@/lib/session";
@@ -28,19 +34,19 @@ async function MyBookings({ session, searchParams }: { session: Session } & Pick
   const status = parseBookingStatus(readParam(params.status));
   const page = readPositiveInt(params.page, 1);
 
-  // El backend no devuelve el total: se pide una reserva de más para saber si hay página siguiente.
+  // Se piden las reservas del usuario y se filtra/pagina en memoria (mismo enfoque que el marketplace):
+  // el filtro `status` del backend no funciona para reservas como estudiante y no devuelve el total.
   let fetched;
   try {
-    fetched = await getMyBookings(session.token, {
-      status,
-      limit: BOOKINGS_PAGE_SIZE + 1,
-      skip: (page - 1) * BOOKINGS_PAGE_SIZE
-    });
+    fetched = await getMyBookings(session.token, { limit: BOOKINGS_FETCH_LIMIT });
   } catch (error) {
     handleApiError(error, ROUTES.bookings);
   }
-  const hasNext = fetched.length > BOOKINGS_PAGE_SIZE;
-  const bookings = fetched.slice(0, BOOKINGS_PAGE_SIZE);
+  const { items: bookings, current: currentPage, totalPages } = paginate(
+    filterBookingsByStatus(fetched, status),
+    page,
+    BOOKINGS_PAGE_SIZE
+  );
 
   const isStudent = hasRole(session.user.roles, [UserRole.STUDENT]);
 
@@ -88,8 +94,8 @@ async function MyBookings({ session, searchParams }: { session: Session } & Pick
           <div className="mt-6">
             <Paginator
               basePath={ROUTES.bookings}
-              page={page}
-              totalPages={hasNext ? page + 1 : page}
+              page={currentPage}
+              totalPages={totalPages}
               params={status ? { status } : {}}
             />
           </div>
