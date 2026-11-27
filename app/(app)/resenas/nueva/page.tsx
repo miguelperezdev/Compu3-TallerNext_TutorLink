@@ -13,6 +13,7 @@ import { BookingStatus } from "@/interfaces/booking.interface";
 import { UserRole } from "@/interfaces/user.interface";
 import { handleApiError } from "@/lib/api-guard";
 import { getMyBookings } from "@/lib/booking-api";
+import { BOOKINGS_FETCH_LIMIT } from "@/lib/booking-utils";
 import { readParam } from "@/lib/pagination";
 import { ROUTES } from "@/lib/routes";
 import type { Session } from "@/lib/session";
@@ -40,15 +41,18 @@ async function NewReview({ session, searchParams }: { session: Session } & Pick<
     return <NotReviewable description="Abre esta pantalla desde el botón Calificar de una tutoría completada." />;
   }
 
-  // No existe GET /booking/:id: la reserva se busca entre las completadas del usuario.
-  let completed;
+  // No existe GET /booking/:id: la reserva se busca entre las del usuario. El estado se verifica aquí
+  // porque el filtro `status` del backend no aplica a reservas como estudiante.
+  let mine;
   try {
-    completed = await getMyBookings(session.token, { status: BookingStatus.COMPLETED, limit: 100 });
+    mine = await getMyBookings(session.token, { limit: BOOKINGS_FETCH_LIMIT });
   } catch (error) {
     handleApiError(error, ROUTES.newReview(bookingId));
   }
 
-  const booking = completed.find((b) => b.id === bookingId && b.student.id === session.user.id);
+  const booking = mine.find(
+    (b) => b.id === bookingId && b.student.id === session.user.id && b.status === BookingStatus.COMPLETED
+  );
   if (!booking) {
     return (
       <NotReviewable description="La reserva no existe, no es tuya o todavía no está completada. Solo se califican tutorías completadas." />
