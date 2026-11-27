@@ -32,7 +32,6 @@ export function StarRatingInput({
                             checked={value === n}
                             onChange={() => onChange(n)}
                             className="peer sr-only"
-                            aria-invalid={error ? true : undefined}
                         />
                         <span className="sr-only">{n === 1 ? "1 estrella" : `${n} estrellas`}</span>
                         <span

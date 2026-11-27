@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { IoAlertCircleOutline, IoChevronBack } from "react-icons/io5";
 import { BookingSummaryCard } from "@/components/bookings/BookingSummaryCard";
 import { Protected } from "@/components/layout/Protected";
+import { ReviewForm } from "@/components/reviews/ReviewForm";
 import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -64,6 +65,7 @@ async function NewReview({ session, searchParams }: { session: Session } & Pick<
       </Link>
       <PageHeader title="Calificar tutoría" description="Tu opinión ayuda a otros estudiantes a elegir tutor." />
       <BookingSummaryCard booking={booking} viewerId={session.user.id} />
+      <ReviewForm bookingId={booking.id} tutorName={booking.tutorProfile.user.fullName} />
     </>
   );
 }
