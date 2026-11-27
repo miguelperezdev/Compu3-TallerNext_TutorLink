@@ -1,10 +1,11 @@
 "use client";
 import { useActionState, useState, type FormEvent, type ReactNode } from "react";
+import { IoCheckmarkCircle } from "react-icons/io5";
 import { createBookingAction, type BookingFormState } from "@/app/(app)/reservar/[tutorId]/actions";
 import { Input } from "@/components/form-ui/Input";
 import { Select } from "@/components/form-ui/Select";
 import { Alert } from "@/components/ui/Alert";
-import { Button } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -18,6 +19,7 @@ import {
     type ScheduleInput
 } from "@/lib/booking-utils";
 import { formatCOP, formatDateTime, formatTimeRange } from "@/lib/format";
+import { ROUTES } from "@/lib/routes";
 
 type Props = {
     tutor: { id: string; fullName: string; hourlyRate: number; subjects: Subject[] };
@@ -69,6 +71,35 @@ export function BookingForm({ tutor, children }: Props) {
 
     const subject = tutor.subjects.find((s) => s.id === values.subjectId);
     const serverFieldErrors = Object.values(state.errors ?? {}).filter(Boolean);
+
+    if (state.booking) {
+        const { booking } = state;
+        return (
+            <>
+                <PageHeader title="¡Reserva enviada!" description="Te avisaremos cuando el tutor la confirme." />
+                <Card className="space-y-4">
+                    <div className="flex items-center gap-3 text-success-700">
+                        <IoCheckmarkCircle className="size-8 shrink-0" aria-hidden />
+                        <p className="font-bold">Tu reserva quedó pendiente de confirmación.</p>
+                    </div>
+                    <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                        <SummaryRow label="Tutor" value={booking.tutorProfile.user.fullName} />
+                        <SummaryRow label="Materia" value={booking.subject.name} />
+                        <SummaryRow label="Fecha y hora" value={formatDateTime(booking.startAt)} />
+                        <SummaryRow label="Horario" value={formatTimeRange(booking.startAt, booking.endAt)} />
+                    </dl>
+                    <div className="flex flex-col gap-3 pt-2 sm:flex-row">
+                        <LinkButton href={ROUTES.bookings} size="lg">
+                            Ver mis tutorías
+                        </LinkButton>
+                        <LinkButton href={ROUTES.studentHome} variant="secondary" size="lg">
+                            Ir al inicio
+                        </LinkButton>
+                    </div>
+                </Card>
+            </>
+        );
+    }
 
     if (step === "summary" && range && subject) {
         return (
