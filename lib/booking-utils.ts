@@ -3,6 +3,17 @@ import { BookingStatus, type Booking } from "@/interfaces/booking.interface";
 /** Reservas por página en /mis-tutorias. */
 export const BOOKINGS_PAGE_SIZE = 6;
 
+/** Máximo de reservas que se piden al backend; luego se filtra y pagina en memoria. */
+export const BOOKINGS_FETCH_LIMIT = 200;
+
+/**
+ * Filtra por estado en el cliente. El backend (GET /booking/mine?status=) no aplica el filtro a las
+ * reservas donde el usuario es estudiante (falta un paréntesis en su `OR`), así que no nos fiamos de él.
+ */
+export function filterBookingsByStatus(bookings: Booking[], status?: BookingStatus) {
+    return status ? bookings.filter((b) => b.status === status) : bookings;
+}
+
 /** Valida el `?status=` de la URL: solo valores del enum, cualquier otra cosa = sin filtro. */
 export function parseBookingStatus(value: string): BookingStatus | undefined {
     return Object.values(BookingStatus).find((status) => status === value);
