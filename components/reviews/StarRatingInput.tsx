@@ -29,7 +29,9 @@ export function StarRatingInput({
                             type="radio"
                             name={name}
                             value={n}
-                            checked={value === n}
+                            // `defaultChecked` (no `checked`): al terminar una Server Action React hace `form.reset()`,
+                            // que vuelve al valor por defecto; así la calificación elegida sobrevive a un error del servidor.
+                            defaultChecked={value === n}
                             onChange={() => onChange(n)}
                             className="peer sr-only"
                         />
