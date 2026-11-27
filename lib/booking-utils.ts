@@ -1,5 +1,13 @@
 import { BookingStatus, type Booking } from "@/interfaces/booking.interface";
 
+/** Reservas por página en /mis-tutorias. */
+export const BOOKINGS_PAGE_SIZE = 6;
+
+/** Valida el `?status=` de la URL: solo valores del enum, cualquier otra cosa = sin filtro. */
+export function parseBookingStatus(value: string): BookingStatus | undefined {
+    return Object.values(BookingStatus).find((status) => status === value);
+}
+
 /** Colombia no tiene horario de verano: el offset es fijo y el ISO resultante es determinista. */
 const BOGOTA_OFFSET = "-05:00";
 
